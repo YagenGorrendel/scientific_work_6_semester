@@ -19,6 +19,7 @@ d1 = d2 = 0.005
 
 def f_naguma_2_elem(t, r):
     global d1
+
     u1, v1, u2, v2 = r
     fu1 = u1 - (u1 ** 3) / 3 - v1 + d1 * (u2 - u1)
     fv1 = E * (u1 - a1)
