@@ -57,7 +57,7 @@ def graphs_chem(func, start_x, start_y, start_z1, start_z2):
     start.extend(start_z1)
     start.extend(start_z2)
 
-    sol = solve_ivp(func, [0, 500], start, method='RK45', dense_output=True)
+    sol = solve_ivp(func, [0, 300], start, method='RK45', dense_output=True)
 
     y = sol.y
 
@@ -161,16 +161,19 @@ d2 = 0
 list_x = []
 list_g = []
 
-size = 3
+size = 4
+
+figures = [None] * size ** 2
+axes = [None] * size ** 2
 
 list_d = []
 
 for coeff in range(size):
-    d1 = coeff * 0.01
+    d1 = coeff * 0.005
     print(d1, '*')
     append_list = []
     for coeff2 in range(size):
-        d2 = coeff2 * 0.05
+        d2 = coeff2 * 0.005
         g_ex = [[0, 0], [0, 0]]
         g_inh = [[0, d1], [d2, 0]]
         print(d2)
@@ -181,17 +184,13 @@ for coeff in range(size):
 
         res = res.tolist()
 
-        print(len(res))
-
         x = res[: len(res) // 4]
         y = res[len(res) // 4: len(res) // 2]
         z1 = res[len(res) // 2: 3 * len(res) // 4]
         z2 = res[3 * len(res) // 4:]
 
-        # append_list.append()
-
-        print(x[0][-25], x[0][-1])
-        print(x[1][-25], x[1][-1])
+        print(x[0][-5], x[0][-1])
+        print(x[1][-5], x[1][-1])
 
         if abs(x[0][-5] - x[0][-1]) < 4 * abs(x[1][-5] - x[1][-1]):
             list_d.append([[d1], [d2], 'ro'])
@@ -200,13 +199,33 @@ for coeff in range(size):
         else:
             list_d.append([[d1], [d2], 'o'])
 
-        plt.figure()
-        plt.plot(t, x[0], label='x1')
-        plt.plot(t, x[1], label='x2')
-        plt.xlabel('t')
-        plt.ylabel('x/y')
-        plt.legend()
-        plt.grid(True)
+        figures[coeff * size + coeff2], axes[coeff * size + coeff2] = plt.subplots(2, 2)
+
+        axes[coeff * size + coeff2][0][0].plot(t, x[0], label='x1')
+        axes[coeff * size + coeff2][0][0].plot(t, x[1], label='x2')
+        axes[coeff * size + coeff2][0][0].set_xlabel('t')
+        axes[coeff * size + coeff2][0][0].set_ylabel('x/y')
+        axes[coeff * size + coeff2][0][0].legend()
+        axes[coeff * size + coeff2][0][0].grid(True)
+
+        axes[coeff * size + coeff2][0][1].plot(t, y[0], label='y1')
+        axes[coeff * size + coeff2][0][1].plot(t, y[1], label='y2')
+        axes[coeff * size + coeff2][0][1].set_xlabel('t')
+        axes[coeff * size + coeff2][0][1].set_ylabel('x/y')
+        axes[coeff * size + coeff2][0][1].legend()
+        axes[coeff * size + coeff2][0][1].grid(True)
+
+        axes[coeff * size + coeff2][1][0].plot(x[0], y[0])
+        axes[coeff * size + coeff2][1][0].set_xlabel('x')
+        axes[coeff * size + coeff2][1][0].set_ylabel('y')
+        axes[coeff * size + coeff2][1][0].grid(True)
+
+        axes[coeff * size + coeff2][1][1].plot(x[1], y[1])
+        axes[coeff * size + coeff2][1][1].set_xlabel('x')
+        axes[coeff * size + coeff2][1][1].set_ylabel('y')
+        axes[coeff * size + coeff2][1][1].grid(True)
+
+
 
 plt.figure()
 for element in list_d:
