@@ -7,20 +7,21 @@ from scipy.integrate import solve_ivp
 
 a = 0.7
 b = 0.8
-tao1 = 0.01
+tao1 = 0.08
 tao2 = 3.1
 tao3 = 1.15
 v_inh = -1.5
 v_ex = 1.5
+S = 0.5
 
 G = 1000
 
 g_ex = []
 g_inh = []
 
-#Функция 
+
 def f_naguma_chem_(t, r):
-    global tao1, tao2, tao3, a, b, v_ex, v_inh, G
+    global tao1, tao2, tao3, a, b, v_ex, v_inh, G, S
 
     r = r.tolist()
 
@@ -35,10 +36,10 @@ def f_naguma_chem_(t, r):
     list_fz2 = []
 
     for i in range(len(x)):
-        list_fx.append((x[i] - (x[i] ** 3) / 3 - y[i] - z1[i] * (x[i] - v_inh) - z2[i] * (x[i] - v_ex)) / tao1)
+        list_fx.append((x[i] - (x[i] ** 3) / 3 - y[i] - z1[i] * (x[i] - v_inh) - z2[i] * (x[i] - v_ex) + S) / tao1)
         list_fy.append(x[i] - b * y[i] + a)
         list_fz1.append((sum([g_inh[i][n] * numpy.heaviside(x[n], 0.5) for n in range(len(g_inh[i]))]) - z1[i]) / tao2)
-        list_fz2.append((sum([g_ex[i][n] * numpy.heaviside(x[n], 0.5) for n in range(len(g_ex[i]))]) - z1[i]) / tao3)
+        list_fz2.append((sum([g_ex[i][n] * numpy.heaviside(x[n], 0.5) for n in range(len(g_ex[i]))]) - z2[i]) / tao3)
 
     res = []
 
@@ -65,11 +66,7 @@ def graphs_chem(func, start_x, start_y, start_z1, start_z2):
 
     return y, t
 
-
-# Pаботаем с химической синаптической моделью связи:
-
-# Сомневаюсь в правильности фазового портрета
-# Построим фазовый портрет:
+# Build phase portret:
 
 """G = 1
 g_ex = [[0, 0, 0], [0.5, 0, 0], [0.5, 0, 0]]
@@ -92,7 +89,7 @@ for coeff in range(30):
     plt.legend()
     plt.grid(True)"""
 
-# Строим график зависимости G от max (зачем написал - не понятно) (скорее всего работает не до конца корректно)
+# Build graph G / max (may work not full correct)
 
 """list_x = []
 list_g = []
@@ -130,20 +127,20 @@ plt.ylabel('x')
 plt.legend()
 plt.grid(True)"""
 
-# Строим графики изоклин в зависимости от коэффициента S для одного элемента ()
+# Build graphs isocline depending on S for one element
 
 """g_ex = [[0]]
 g_inh = [[0]]
 
 for k in range(21):
     s = k / 10
-    x = [(n - 100) / 50 for n in range(201)]
+    x = [(n - 100) * 0.02 for n in range(201)]
     y1 = []
     y2 = []
 
     for count in range(201):
-        y1.append(x[count] - x[count] ** 3 / 3 + s)
-        y2.append(1 / b * (x[count] + a))
+        y1.append(x[count] - (x[count] ** 3) / 3 + s)
+        y2.append((x[count] + a) / b)
 
     plt.figure()
     plt.plot(x, y1, label='y1')
@@ -153,7 +150,7 @@ for k in range(21):
     plt.legend()
     plt.grid(True)"""
 
-# Строим графики зависимости коэффициентов связи клеток при тормозящей связи
+# Build graphs depending on the coefficient of inghibitor intercellular communication
 
 d1 = 0
 d2 = 0
@@ -161,7 +158,7 @@ d2 = 0
 list_x = []
 list_g = []
 
-size = 4
+size = 3
 
 figures = [None] * size ** 2
 axes = [None] * size ** 2
@@ -169,11 +166,11 @@ axes = [None] * size ** 2
 list_d = []
 
 for coeff in range(size):
-    d1 = coeff * 0.005
+    d1 = coeff * 0.5
     print(d1, '*')
     append_list = []
     for coeff2 in range(size):
-        d2 = coeff2 * 0.005
+        d2 = coeff2 * 0.5
         g_ex = [[0, 0], [0, 0]]
         g_inh = [[0, d1], [d2, 0]]
         print(d2)
@@ -189,8 +186,8 @@ for coeff in range(size):
         z1 = res[len(res) // 2: 3 * len(res) // 4]
         z2 = res[3 * len(res) // 4:]
 
-        print(x[0][-5], x[0][-1])
-        print(x[1][-5], x[1][-1])
+        # print(x[0][-5], x[0][-1])
+        # print(x[1][-5], x[1][-1])
 
         if abs(x[0][-5] - x[0][-1]) < 4 * abs(x[1][-5] - x[1][-1]):
             list_d.append([[d1], [d2], 'ro'])
@@ -200,31 +197,30 @@ for coeff in range(size):
             list_d.append([[d1], [d2], 'o'])
 
         figures[coeff * size + coeff2], axes[coeff * size + coeff2] = plt.subplots(2, 2)
-
+        
         axes[coeff * size + coeff2][0][0].plot(t, x[0], label='x1')
         axes[coeff * size + coeff2][0][0].plot(t, x[1], label='x2')
         axes[coeff * size + coeff2][0][0].set_xlabel('t')
         axes[coeff * size + coeff2][0][0].set_ylabel('x/y')
         axes[coeff * size + coeff2][0][0].legend()
         axes[coeff * size + coeff2][0][0].grid(True)
-
+        
         axes[coeff * size + coeff2][0][1].plot(t, y[0], label='y1')
         axes[coeff * size + coeff2][0][1].plot(t, y[1], label='y2')
         axes[coeff * size + coeff2][0][1].set_xlabel('t')
         axes[coeff * size + coeff2][0][1].set_ylabel('x/y')
         axes[coeff * size + coeff2][0][1].legend()
         axes[coeff * size + coeff2][0][1].grid(True)
-
+        
         axes[coeff * size + coeff2][1][0].plot(x[0], y[0])
         axes[coeff * size + coeff2][1][0].set_xlabel('x')
         axes[coeff * size + coeff2][1][0].set_ylabel('y')
         axes[coeff * size + coeff2][1][0].grid(True)
-
+        
         axes[coeff * size + coeff2][1][1].plot(x[1], y[1])
         axes[coeff * size + coeff2][1][1].set_xlabel('x')
         axes[coeff * size + coeff2][1][1].set_ylabel('y')
         axes[coeff * size + coeff2][1][1].grid(True)
-
 
 
 plt.figure()
@@ -234,5 +230,8 @@ plt.xlabel('t')
 plt.ylabel('x/y')
 plt.legend()
 plt.grid(True)
+
+# Finding critical value
+
 
 plt.show()
