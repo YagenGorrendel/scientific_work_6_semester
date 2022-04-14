@@ -12,7 +12,7 @@ tao2 = 3.1
 tao3 = 1.15
 v_inh = -1.5
 v_ex = 1.5
-S = 0.5
+S = [0.375, 0, 0]
 
 G = 1000
 
@@ -36,7 +36,7 @@ def f_naguma_chem_(t, r):
     list_fz2 = []
 
     for i in range(len(x)):
-        list_fx.append((x[i] - (x[i] ** 3) / 3 - y[i] - z1[i] * (x[i] - v_inh) - z2[i] * (x[i] - v_ex) + S) / tao1)
+        list_fx.append((x[i] - (x[i] ** 3) / 3 - y[i] - z1[i] * (x[i] - v_inh) - z2[i] * (x[i] - v_ex) + S[i]) / tao1)
         list_fy.append(x[i] - b * y[i] + a)
         list_fz1.append((sum([g_inh[i][n] * numpy.heaviside(x[n], 0.5) for n in range(len(g_inh[i]))]) - z1[i]) / tao2)
         list_fz2.append((sum([g_ex[i][n] * numpy.heaviside(x[n], 0.5) for n in range(len(g_ex[i]))]) - z2[i]) / tao3)
@@ -65,6 +65,7 @@ def graphs_chem(func, start_x, start_y, start_z1, start_z2):
     t = sol.t
 
     return y, t
+
 
 # Build phase portret:
 
@@ -152,7 +153,7 @@ for k in range(21):
 
 # Build graphs depending on the coefficient of inghibitor intercellular communication
 
-d1 = 0
+"""d1 = 0
 d2 = 0
 
 list_x = []
@@ -197,31 +198,30 @@ for coeff in range(size):
             list_d.append([[d1], [d2], 'o'])
 
         figures[coeff * size + coeff2], axes[coeff * size + coeff2] = plt.subplots(2, 2)
-        
+
         axes[coeff * size + coeff2][0][0].plot(t, x[0], label='x1')
         axes[coeff * size + coeff2][0][0].plot(t, x[1], label='x2')
         axes[coeff * size + coeff2][0][0].set_xlabel('t')
         axes[coeff * size + coeff2][0][0].set_ylabel('x/y')
         axes[coeff * size + coeff2][0][0].legend()
         axes[coeff * size + coeff2][0][0].grid(True)
-        
+
         axes[coeff * size + coeff2][0][1].plot(t, y[0], label='y1')
         axes[coeff * size + coeff2][0][1].plot(t, y[1], label='y2')
         axes[coeff * size + coeff2][0][1].set_xlabel('t')
         axes[coeff * size + coeff2][0][1].set_ylabel('x/y')
         axes[coeff * size + coeff2][0][1].legend()
         axes[coeff * size + coeff2][0][1].grid(True)
-        
+
         axes[coeff * size + coeff2][1][0].plot(x[0], y[0])
         axes[coeff * size + coeff2][1][0].set_xlabel('x')
         axes[coeff * size + coeff2][1][0].set_ylabel('y')
         axes[coeff * size + coeff2][1][0].grid(True)
-        
+
         axes[coeff * size + coeff2][1][1].plot(x[1], y[1])
         axes[coeff * size + coeff2][1][1].set_xlabel('x')
         axes[coeff * size + coeff2][1][1].set_ylabel('y')
         axes[coeff * size + coeff2][1][1].grid(True)
-
 
 plt.figure()
 for element in list_d:
@@ -229,9 +229,63 @@ for element in list_d:
 plt.xlabel('t')
 plt.ylabel('x/y')
 plt.legend()
+plt.grid(True)"""
+
+# Work with 3 elements:
+
+g_ex = [[0, 0, 0], [0.3, 0, 0], [0.3, 0, 0]]
+list_d1 = []
+list_d2 = []
+list_ge = []
+
+for count in range(51):
+    Ge = count * 0.1
+    print(Ge)
+    list_ge.append(Ge)
+    g_inh = [[0, 0, 0], [0, 0, Ge], [0, Ge, 0]]
+
+    res, t = graphs_chem(f_naguma_chem_, [-10, -1, -15], [0, 0, 0.6], [0, 0.05, 0.05], [0, 0.5, 0.5])
+
+    res = res.tolist()
+
+    x = res[: len(res) // 4]
+    y = res[len(res) // 4: len(res) // 2]
+
+    list_d1.append(0.5 * (max(x[1][1000:]) + max(x[2][1000:])))
+
+    if Ge == 1.5 or Ge == 2 or Ge == 3:
+        figure, axes = plt.subplots(2, 3)
+
+        axes[0][0].plot(x[0], y[0], label='1')
+        axes[0][1].plot(x[1], y[1], label='2')
+        axes[0][2].plot(x[2], y[2], label='3')
+        axes[1][0].plot(t, x[0], label='1')
+        axes[1][1].plot(t, x[1], label='2')
+        axes[1][2].plot(t, x[2], label='3')
+
+    res, t = graphs_chem(f_naguma_chem_, [10, 1, 1], [2, 1, 0], [0, 0.4, 0.4], [0, 0.4, 0.4])
+
+    res = res.tolist()
+
+    x = res[: len(res) // 4]
+
+    if Ge == 0.5 or Ge == 3:
+        figure, axes = plt.subplots(1, 3)
+
+        axes[0].plot(t, x[0], label='x1')
+        axes[1].plot(t, x[1], label='x2')
+        axes[2].plot(t, x[2], label='x3')
+        axes[0].legend()
+        axes[0].grid(True)
+
+    list_d2.append(0.5 * (max(x[1][1000:]) + max(x[2][1000:])))
+
+
+plt.figure()
+plt.plot(list_ge, list_d1)
+plt.plot(list_ge, list_d2)
+plt.xlabel('G')
+plt.ylabel('M')
 plt.grid(True)
-
-# Finding critical value
-
 
 plt.show()
