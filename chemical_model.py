@@ -1,6 +1,7 @@
 import math
 import numpy
 import scipy
+import sys
 import matplotlib.pyplot as plt
 
 from scipy.integrate import solve_ivp
@@ -233,57 +234,241 @@ plt.grid(True)"""
 
 # Work with 3 elements:
 
-g_ex = [[0, 0, 0], [0.3, 0, 0], [0.3, 0, 0]]
-list_d1 = []
+"""list_d1 = []
 list_d2 = []
+list_he = []
 list_ge = []
+list_ge_ex = []
 
-for count in range(51):
-    Ge = count * 0.1
-    print(Ge)
-    list_ge.append(Ge)
-    g_inh = [[0, 0, 0], [0, 0, Ge], [0, Ge, 0]]
+for count1 in range(11):
+    He = count1 * 0.05
+    print(He)
 
-    res, t = graphs_chem(f_naguma_chem_, [-10, -1, -15], [0, 0, 0.6], [0, 0.05, 0.05], [0, 0.5, 0.5])
+    for count2 in range(11):
+        Ge = count2 * 0.05
+        sys.stdout.write(str(Ge))
 
-    res = res.tolist()
+        list_he.append(He)
+        list_ge.append(Ge)
 
-    x = res[: len(res) // 4]
-    y = res[len(res) // 4: len(res) // 2]
+        g_ex = [[0, 0, 0], [Ge, 0, 0], [He, 0, 0]]
+        g_inh = [[0, 0, 0], [0, 0, 2.5], [0, 2.5, 0]]
 
-    list_d1.append(0.5 * (max(x[1][1000:]) + max(x[2][1000:])))
+        res, t = graphs_chem(f_naguma_chem_, [-10, -1, -15], [0, 0, 0.6], [0, 0.05, 0.05], [0, 0.5, 0.5])  # 2 elem
 
-    if Ge == 1.5 or Ge == 2 or Ge == 3:
-        figure, axes = plt.subplots(2, 3)
+        res = res.tolist()
 
-        axes[0][0].plot(x[0], y[0], label='1')
-        axes[0][1].plot(x[1], y[1], label='2')
-        axes[0][2].plot(x[2], y[2], label='3')
-        axes[1][0].plot(t, x[0], label='1')
-        axes[1][1].plot(t, x[1], label='2')
-        axes[1][2].plot(t, x[2], label='3')
+        x = res[: len(res) // 4]
 
-    res, t = graphs_chem(f_naguma_chem_, [10, 1, 1], [2, 1, 0], [0, 0.4, 0.4], [0, 0.4, 0.4])
+        size_l2_1 = max(x[1][100:]) - min(x[1][100:])
+        size_l3_1 = max(x[2][100:]) - min(x[2][100:])
 
-    res = res.tolist()
+        res, t = graphs_chem(f_naguma_chem_, [10, 1, 1], [2, 1, 0], [0, 0.4, 0.4], [0, 0.4, 0.4])  # 3 elem
 
-    x = res[: len(res) // 4]
+        res = res.tolist()
 
-    if Ge == 0.5 or Ge == 3:
-        figure, axes = plt.subplots(1, 3)
+        x = res[: len(res) // 4]
 
-        axes[0].plot(t, x[0], label='x1')
-        axes[1].plot(t, x[1], label='x2')
-        axes[2].plot(t, x[2], label='x3')
-        axes[0].legend()
-        axes[0].grid(True)
+        size_l2_2 = max(x[1][100:]) - min(x[1][100:])
+        size_l3_2 = max(x[2][100:]) - min(x[2][100:])
 
-    list_d2.append(0.5 * (max(x[1][1000:]) + max(x[2][1000:])))
+        if size_l2_1 > 1.5:
+            if size_l3_2 > 1.5:
+                list_ge_ex.append('r')
+            else:
+                list_ge_ex.append('g')
+        elif size_l3_1 > 1.5:
+            if size_l2_2 > 1.5:
+                list_ge_ex.append('r')
+            else:
+                list_ge_ex.append('b')
+        else:
+            if size_l2_2 > 1.5:
+                list_ge_ex.append('g')
+            elif size_l3_2 > 1.5:
+                list_ge_ex.append('b')
+            else:
+                list_ge_ex.append('k')
 
 
 plt.figure()
-plt.plot(list_ge, list_d1)
-plt.plot(list_ge, list_d2)
+for s in range(len(list_ge_ex)):
+    plt.plot(list_ge[s], list_he[s], c=list_ge_ex[s], marker='o')
+plt.xlabel('G')
+plt.ylabel('M')
+plt.grid(True)"""
+
+# Print right graph, addiction between Gex
+# Find 1 way:
+
+list_he = []
+list_ge = []
+
+He = 0.0
+He_max = 10
+
+while He < He_max:
+    list_he.append(He)
+    print(He, He_max)
+
+    if He_max > 1:
+
+        finding_hor = True
+        noise = 10000
+        Ge_max = 0.5
+        Ge_min = 0
+
+        while finding_hor:
+            Ge = (Ge_max + Ge_min) / 2
+            # sys.stdout.write(str(Ge))
+
+            g_ex = [[0, 0, 0], [Ge, 0, 0], [He, 0, 0]]
+            g_inh = [[0, 0, 0], [0, 0, 2.5], [0, 2.5, 0]]
+
+            res, t = graphs_chem(f_naguma_chem_, [-10, -1, -15], [0, 0, 0.6], [0, 0.05, 0.05], [0, 0.5, 0.5])  # 2 elem
+
+            res = res.tolist()
+            x = res[: len(res) // 4]
+
+            size_l2 = max(x[1][100:]) - min(x[1][100:])
+
+            if size_l2 < 1.5:
+                if (((Ge_max - Ge_min) * noise) % 1) == 0:
+                    Ge_min = Ge
+                else:
+                    if len(list_ge) == 0:
+                        He_max = Ge
+                    list_ge.append(He_max)
+                    finding_hor = False
+            else:
+                Ge_max = Ge
+    else:
+        list_ge.append(He_max)
+
+    He += 0.01
+
+# Second way:
+while He < 0.5:
+    list_he.append(He)
+    print(He)
+
+    finding_hor = True
+    noise = 10
+    Ge_max = 0.5
+    Ge_min = 0
+
+    while finding_hor:
+        Ge = (Ge_max + Ge_min) / 2
+        sys.stdout.write(str(Ge))
+
+        g_ex = [[0, 0, 0], [Ge, 0, 0], [He, 0, 0]]
+        g_inh = [[0, 0, 0], [0, 0, 2.5], [0, 2.5, 0]]
+
+        res, t = graphs_chem(f_naguma_chem_, [-10, -1, -15], [0, 0, 0.6], [0, 0.05, 0.05], [0, 0.5, 0.5])  # 2 elem
+
+        res = res.tolist()
+        x = res[: len(res) // 4]
+
+        size_l2 = max(x[1][100:]) - min(x[1][100:])
+
+        if size_l2 > 1.5:
+            # print (((Ge_max - Ge_min) * noise) % 1)
+            if (((Ge_max - Ge_min) * noise) % 1) == 0:
+                Ge_max = Ge
+            else:
+                list_ge.append(Ge)
+                finding_hor = False
+        else:
+            Ge_min = Ge
+
+    He += 0.05
+
+# Find 3 and 4 ways:
+list_he_1 = []
+list_ge_1 = []
+
+Ge = 0.0
+Ge_max = 10
+
+while Ge < Ge_max:
+    list_ge_1.append(Ge)
+    print(Ge, Ge_max)
+
+    if Ge_max > 1:
+
+        finding_hor = True
+        noise = 10000
+        He_max = 0.5
+        He_min = 0
+
+        while finding_hor:
+            He = (He_max + He_min) / 2
+            # sys.stdout.write(str(He))
+
+            g_ex = [[0, 0, 0], [Ge, 0, 0], [He, 0, 0]]
+            g_inh = [[0, 0, 0], [0, 0, 2.5], [0, 2.5, 0]]
+
+            res, t = graphs_chem(f_naguma_chem_, [10, 1, 1], [2, 1, 0], [0, 0.4, 0.4], [0, 0.4, 0.4])  # 3 elem
+
+            res = res.tolist()
+            x = res[: len(res) // 4]
+
+            size_l2 = max(x[2][100:]) - min(x[2][100:])
+
+            if size_l2 < 1.5:
+                if (((He_max - He_min) * noise) % 1) == 0:
+                    He_min = He
+                else:
+                    if len(list_he_1) == 0:
+                        Ge_max = He
+                    list_he_1.append(Ge_max)
+                    finding_hor = False
+            else:
+                He_max = He
+    else:
+        list_he_1.append(Ge_max)
+
+    Ge += 0.01
+
+# Second way:
+while Ge < 0.5:
+    list_ge_1.append(Ge)
+    print(Ge)
+
+    finding_hor = True
+    noise = 10
+    He_max = 0.5
+    He_min = 0
+
+    while finding_hor:
+        He = (He_max + He_min) / 2
+        sys.stdout.write(str(He))
+
+        g_ex = [[0, 0, 0], [Ge, 0, 0], [He, 0, 0]]
+        g_inh = [[0, 0, 0], [0, 0, 2.5], [0, 2.5, 0]]
+
+        res, t = graphs_chem(f_naguma_chem_, [10, 1, 1], [2, 1, 0], [0, 0.4, 0.4], [0, 0.4, 0.4])  # 3 elem
+
+        res = res.tolist()
+        x = res[: len(res) // 4]
+
+        size_l2 = max(x[2][100:]) - min(x[2][100:])
+
+        if size_l2 > 1.5:
+            # print (((Ge_max - Ge_min) * noise) % 1)
+            if (((He_max - He_min) * noise) % 1) == 0:
+                He_max = He
+            else:
+                list_he_1.append(He)
+                finding_hor = False
+        else:
+            He_min = He
+
+    Ge += 0.05
+
+plt.figure()
+plt.plot(list_ge, list_he)
+plt.plot(list_ge_1, list_he_1)
 plt.xlabel('G')
 plt.ylabel('M')
 plt.grid(True)
