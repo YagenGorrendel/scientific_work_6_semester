@@ -15,14 +15,12 @@ v_inh = -1.5
 v_ex = 1.5
 S = [0.375, 0, 0]
 
-G = 1000
-
 g_ex = []
 g_inh = []
 
 
 def f_naguma_chem_(t, r):
-    global tao1, tao2, tao3, a, b, v_ex, v_inh, G, S
+    global tao1, tao2, tao3, a, b, v_ex, v_inh, S
 
     r = r.tolist()
 
@@ -39,8 +37,8 @@ def f_naguma_chem_(t, r):
     for i in range(len(x)):
         list_fx.append((x[i] - (x[i] ** 3) / 3 - y[i] - z1[i] * (x[i] - v_inh) - z2[i] * (x[i] - v_ex) + S[i]) / tao1)
         list_fy.append(x[i] - b * y[i] + a)
-        list_fz1.append((sum([g_inh[i][n] * numpy.heaviside(x[n], 0.5) for n in range(len(g_inh[i]))]) - z1[i]) / tao2)
-        list_fz2.append((sum([g_ex[i][n] * numpy.heaviside(x[n], 0.5) for n in range(len(g_ex[i]))]) - z2[i]) / tao3)
+        list_fz1.append((sum([g_inh[i][n] * numpy.heaviside(x[n], 0) for n in range(len(g_inh[i]))]) - z1[i]) / tao2)
+        list_fz2.append((sum([g_ex[i][n] * numpy.heaviside(x[n], 0) for n in range(len(g_ex[i]))]) - z2[i]) / tao3)
 
     res = []
 
@@ -66,6 +64,51 @@ def graphs_chem(func, start_x, start_y, start_z1, start_z2):
     t = sol.t
 
     return y, t
+
+
+def horizontal_ways_finding(n, step, num_elem):
+    global g_inh, g_ex
+
+    list_x = []
+    list_y = [0.0]
+    H = 0.0
+
+    finding_hor = True
+    G_max = 0.5
+    G_min = 0
+
+    while finding_hor:
+        G = (G_max + G_min) / 2
+        sys.stdout.write(str(G))
+
+        g_ex = [[0, 0, 0], [G, 0, 0], [H, 0, 0]]
+        g_inh = [[0, 0, 0], [0, 0, 2.5], [0, 2.5, 0]]
+
+        if num_elem == 2:
+            res, t = graphs_chem(f_naguma_chem_, [-10, -1, -15], [0, 0, 0.6], [0, 0.05, 0.05],
+                                 [0, 0.5, 0.5])  # 2 elem
+        else:
+            res, t = graphs_chem(f_naguma_chem_, [10, 1, 1], [2, 1, 0], [0, 0.4, 0.4], [0, 0.4, 0.4])  # 3 elem
+
+        res = res.tolist()
+        x = res[: len(res) // 4]
+
+        size = max(x[num_elem - 1][300:]) - min(x[num_elem - 1][300:])
+
+        if size < 1.5:
+            if (G_max - G_min) > (1 / n):
+                G_min = G
+            else:
+                print("afa", G_max, G_min)
+                list_x.append(G)
+                finding_hor = False
+        else:
+            G_max = G
+
+    while H < list_x[0]:
+        H += step
+        list_y.append(H)
+        list_x.append(list_x[0])
 
 
 # Build phase portret:
@@ -299,53 +342,13 @@ plt.ylabel('M')
 plt.grid(True)"""
 
 # Print right graph, addiction between Gex
-# Find 1 way:
 
 list_he = []
 list_ge = []
+noise = 100.0
 
-He = 0.0
-He_max = 10
-
-while He < He_max:
-    list_he.append(He)
-    print(He, He_max)
-
-    if He_max > 1:
-
-        finding_hor = True
-        noise = 10000
-        Ge_max = 0.5
-        Ge_min = 0
-
-        while finding_hor:
-            Ge = (Ge_max + Ge_min) / 2
-            # sys.stdout.write(str(Ge))
-
-            g_ex = [[0, 0, 0], [Ge, 0, 0], [He, 0, 0]]
-            g_inh = [[0, 0, 0], [0, 0, 2.5], [0, 2.5, 0]]
-
-            res, t = graphs_chem(f_naguma_chem_, [-10, -1, -15], [0, 0, 0.6], [0, 0.05, 0.05], [0, 0.5, 0.5])  # 2 elem
-
-            res = res.tolist()
-            x = res[: len(res) // 4]
-
-            size_l2 = max(x[1][100:]) - min(x[1][100:])
-
-            if size_l2 < 1.5:
-                if (((Ge_max - Ge_min) * noise) % 1) == 0:
-                    Ge_min = Ge
-                else:
-                    if len(list_ge) == 0:
-                        He_max = Ge
-                    list_ge.append(He_max)
-                    finding_hor = False
-            else:
-                Ge_max = Ge
-    else:
-        list_ge.append(He_max)
-
-    He += 0.01
+# First way:
+list_ge, list_he = horizontal_ways_finding(noise)
 
 # Second way:
 while He < 0.5:
@@ -353,7 +356,6 @@ while He < 0.5:
     print(He)
 
     finding_hor = True
-    noise = 10
     Ge_max = 0.5
     Ge_min = 0
 
@@ -369,11 +371,10 @@ while He < 0.5:
         res = res.tolist()
         x = res[: len(res) // 4]
 
-        size_l2 = max(x[1][100:]) - min(x[1][100:])
+        size_l2 = max(x[1][300:]) - min(x[1][300:])
 
         if size_l2 > 1.5:
-            # print (((Ge_max - Ge_min) * noise) % 1)
-            if (((Ge_max - Ge_min) * noise) % 1) == 0:
+            if (Ge_max - Ge_min) > (1 / noise):
                 Ge_max = Ge
             else:
                 list_ge.append(Ge)
@@ -381,29 +382,27 @@ while He < 0.5:
         else:
             Ge_min = Ge
 
-    He += 0.05
+    He += 0.01
 
-# Find 3 and 4 ways:
 list_he_1 = []
 list_ge_1 = []
-
 Ge = 0.0
 Ge_max = 10
 
+# Third way:
 while Ge < Ge_max:
     list_ge_1.append(Ge)
-    print(Ge, Ge_max)
+    print(Ge)
 
     if Ge_max > 1:
 
         finding_hor = True
-        noise = 10000
         He_max = 0.5
         He_min = 0
 
         while finding_hor:
             He = (He_max + He_min) / 2
-            # sys.stdout.write(str(He))
+            sys.stdout.write(str(He))
 
             g_ex = [[0, 0, 0], [Ge, 0, 0], [He, 0, 0]]
             g_inh = [[0, 0, 0], [0, 0, 2.5], [0, 2.5, 0]]
@@ -413,10 +412,10 @@ while Ge < Ge_max:
             res = res.tolist()
             x = res[: len(res) // 4]
 
-            size_l2 = max(x[2][100:]) - min(x[2][100:])
+            size_l2 = max(x[2][300:]) - min(x[2][300:])
 
             if size_l2 < 1.5:
-                if (((He_max - He_min) * noise) % 1) == 0:
+                if (He_max - He_min) > (1 / noise):
                     He_min = He
                 else:
                     if len(list_he_1) == 0:
@@ -430,13 +429,12 @@ while Ge < Ge_max:
 
     Ge += 0.01
 
-# Second way:
+# Fourth way:
 while Ge < 0.5:
     list_ge_1.append(Ge)
     print(Ge)
 
     finding_hor = True
-    noise = 10
     He_max = 0.5
     He_min = 0
 
@@ -452,11 +450,10 @@ while Ge < 0.5:
         res = res.tolist()
         x = res[: len(res) // 4]
 
-        size_l2 = max(x[2][100:]) - min(x[2][100:])
+        size_l2 = max(x[2][300:]) - min(x[2][300:])
 
         if size_l2 > 1.5:
-            # print (((Ge_max - Ge_min) * noise) % 1)
-            if (((He_max - He_min) * noise) % 1) == 0:
+            if (He_max - He_min) > (1 / noise):
                 He_max = He
             else:
                 list_he_1.append(He)
@@ -464,13 +461,13 @@ while Ge < 0.5:
         else:
             He_min = He
 
-    Ge += 0.05
+    Ge += 0.01
 
 plt.figure()
 plt.plot(list_ge, list_he)
 plt.plot(list_ge_1, list_he_1)
-plt.xlabel('G')
-plt.ylabel('M')
+plt.xlabel('Ge')
+plt.ylabel('He')
 plt.grid(True)
 
 plt.show()
